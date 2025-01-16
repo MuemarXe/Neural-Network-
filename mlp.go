@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"image"
+	"image/png"
 	"math"
 	"os"
 
-	"gonum.org/v1/gonum/stat/distuv"
-
 	"gomun.org/v1/gonum/mat"
+	"gonum.org/v1/gonum/stat/distuv"
 )
 
 //The neural Network
@@ -124,6 +126,23 @@ func randomArray(size int, v float64) (data []float64) {
 
 }
 
+func addBiasNodeTo(m mat.Matrix, b float64) mat.Matrix {
+	r, _ := m.Dims()
+	a := mat.NewDense(r+1, 1, nil)
+
+	a.Set(0, 0, b)
+	for i := 0; i < r; i++ {
+		a.Set(i+1, 0, m.At(i, 0))
+	}
+	return a
+}
+
+// pretty print a Gonum matrix
+func matrixPrint(X mat.Matrix) {
+	fa := mat.Formatted(X, mat.Prefix(""), mat.Squeeze())
+	fmt.Printf("%v\n", fa)
+}
+
 // Now that we have our neural network , the two main functions we can ask it to do is
 //Either train itself with a set of data or predict values given a set of test data
 
@@ -141,7 +160,7 @@ func (net Network) Predict(inputData []float64) mat.Matrix {
 	inputs := mat.NewDense(len(inputData), 1, inputData)
 	hiddenInputs := dot(net.hiddenWeights, inputs)
 	hiddenOutputs := apply(sigmoid, hiddenInputs)
-	finalInputs := dot(net.OutputWeights, hiddenOutputs)
+	finalInputs := dot(net.outputWeights, hiddenOutputs)
 	finalOutputs := apply(sigmoid, finalInputs)
 	return finalOutputs
 	/*We start off with the inputs first, by creating a matrix called inputs to represent the input values
@@ -157,11 +176,11 @@ func sigmoid(r, c int, z float64) float64 {
 }
 
 // Let’s see how we do forward and back propagation in training.
-func (net *Neural) Train(inputData []float64, targetData []float64) {
+func (net *Network) Train(inputData []float64, targetData []float64) {
 	// feedfoward
 	inputs := mat.NewDense(len(inputData), 1, inputData)
 	hiddenInputs := dot(net.hiddenWeights, inputs)
-	hiddenOutputs := apply(sigmoid, hiddenOutputs)
+	hiddenOutputs := apply(sigmoid, hiddenInputs)
 	finalInputs := dot(net.outputWeights, hiddenOutputs)
 	finalOutputs := apply(sigmoid, finalInputs)
 
@@ -175,7 +194,7 @@ func (net *Neural) Train(inputData []float64, targetData []float64) {
 		scale(net.learningRate,
 			dot(multiply(outputErrors, sigmoidPrime(finalOutputs)),
 				hiddenOutputs.T()))).(*mat.Dense)
-	net.hidddenWeights = add(net.hiddenWeights,
+	net.hiddenWeights = add(net.hiddenWeights,
 		scale(net.learningRate,
 			dot(multiply(hiddenErrors, sigmoidPrime(hiddenOutputs)),
 				inputs.T()))).(*mat.Dense)
@@ -194,7 +213,7 @@ Remember that we are subtracting this number from the weights. Since this is a n
 
 To simplify the calculations we use a sigmoidPrime function, which is nothing more than doing sigP = sig(1 - sig)
 */
-func sigmoidPrime(m mat.Matrix) m.Matrix {
+func sigmoidPrime(m mat.Matrix) mat.Matrix {
 	rows, _ := m.Dims()
 	o := make([]float64, rows)
 	for i := range o {
@@ -233,4 +252,65 @@ func load(net *Network) {
 		net.outputWeights.UnmarshalBinaryFrom(o)
 	}
 	return
+}
+
+// Predicting individual files
+func dataFromImage(filePath string) (pixels []float64) {
+	// read the file
+	imgFile, err := os.Open(filePath)
+	defer imgFile.Close()
+	if err != nil {
+		fmt.Println("cannot read file:", err)
+
+	}
+	img, err := png.Decode(imgFile)
+	if err != nil {
+		fmt.Println("Cannot decode file:", err)
+	}
+	//create a grayscale image
+	bounds := img.Bounds()
+	gray := image.NewGray(bounds)
+
+	for x := 0; x < bounds.Max.X; x++ {
+		for y := 0; y < bounds.Max.Y; y++ {
+
+			var rgba = img.At(x, y)
+			gray.Set(x, y, rgba)
+		}
+
+	}
+	pixels = make([]float64, len(gray.Pix))
+	// populate the pixel array subtract Pix from 255 because
+	//that's how the MNIST database was trained (in reveerse)
+	for i := 0; i < len(gray.Pix); i++ {
+		pixels[i] = (float64(255-gray.Pix[i]) / 255.0 * 0.999) + 0.001
+	}
+	return
+	/*
+		Each pixel in the image represents an value but we can’t use the normal RGBA,
+		instead we need an image.Gray . From the image.Gray struct we get the Pix value and translate it
+		into a float64 value instead.
+		 The MNIST image is white on black, so we need to subtract each pixel value from 255.
+	*/
+}
+
+/*
+Once we have the pixel array, it’s quite straightforward.
+We use a predictFromImage function that takes in the neural network and predicts
+the digit from an image file. The results are an array of probabilities
+where the index is the digit.What we need to do is to find the index and return it
+*/
+func predictFromImage(net Network, path string) int {
+	input := dataFromImage(path)
+	output := net.Predict(input)
+	matrixPrint(output)
+	best := 0
+	highest := 0.0
+	for i := 0; i < net.outputs; i++ {
+		if output.At(i, 0) > highest {
+			best = i
+			highest = output.At(i, 0)
+		}
+	}
+	return best
 }
