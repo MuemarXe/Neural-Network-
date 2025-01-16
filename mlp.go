@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"image/png"
 	"math"
 	"os"
 
@@ -246,13 +247,21 @@ func dataFromImage(filePath string) (pixels []float64) {
 		fmt.Println("cannot read file:", err)
 
 	}
+	img, err := png.Decode(imgFile)
+	if err != nil {
+		fmt.Println("Cannot decode file:", err)
+	}
 	//create a grayscale image
 	bounds := img.Bounds()
 	gray := image.NewGray(bounds)
 
 	for x := 0; x < bounds.Max; x++ {
-		var rgba = img.At(x, y)
-		gray.Set(x, y, rgba)
+		for y := 0; y < bounds.Max.Y; y++ {
+
+			var rgba = img.At(x, y)
+			gray.Set(x, y, rgba)
+		}
+
 	}
 	pixels = make([]float64, len(gray.Pix))
 	// populate the pixel array subtract Pix from 255 because
