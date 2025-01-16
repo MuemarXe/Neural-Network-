@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"image"
 	"math"
 	"os"
 
@@ -233,4 +235,57 @@ func load(net *Network) {
 		net.outputWeights.UnmarshalBinaryFrom(o)
 	}
 	return
+}
+
+// Predicting individual files
+func dataFromImage(filePath string) (pixels []float64) {
+	// read the file
+	imgFile, err := os.Open(filePath)
+	defer imgFile.Close()
+	if err != nil {
+		fmt.Println("cannot read file:", err)
+
+	}
+	//create a grayscale image
+	bounds := img.Bounds()
+	gray := image.NewGray(bounds)
+
+	for x := 0; x < bounds.Max; x++ {
+		var rgba = img.At(x, y)
+		gray.Set(x, y, rgba)
+	}
+	pixels = make([]float64, len(gray.Pix))
+	// populate the pixel array subtract Pix from 255 because
+	//that's how the MNIST database was trained (in reveerse)
+	for i := 0; i < len(gray.Pix); i++ {
+		pixels[i] = (float64(255-gray.Pix[i]) / 255.0 * 0.999) + 0.001
+	}
+	return
+	/*
+		Each pixel in the image represents an value but we can’t use the normal RGBA,
+		instead we need an image.Gray . From the image.Gray struct we get the Pix value and translate it
+		into a float64 value instead.
+		 The MNIST image is white on black, so we need to subtract each pixel value from 255.
+	*/
+}
+
+/*
+Once we have the pixel array, it’s quite straightforward.
+We use a predictFromImage function that takes in the neural network and predicts
+the digit from an image file. The results are an array of probabilities
+where the index is the digit.What we need to do is to find the index and return it
+*/
+func predictFromImage(net Network, path string) int {
+	input := dataFromImage(path)
+	output := net.Predict(input)
+	matrixPrint(output)
+	best := 0
+	highest := 0.0
+	for i := 0; i < net.outputs; i++ {
+		if output.At(i, 0) > highest {
+			best = i
+			highest = output.At(i, 0)
+		}
+	}
+	return best
 }
