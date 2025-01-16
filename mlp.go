@@ -7,9 +7,8 @@ import (
 	"math"
 	"os"
 
-	"gonum.org/v1/gonum/stat/distuv"
-
 	"gomun.org/v1/gonum/mat"
+	"gonum.org/v1/gonum/stat/distuv"
 )
 
 //The neural Network
@@ -127,6 +126,23 @@ func randomArray(size int, v float64) (data []float64) {
 
 }
 
+func addBiasNodeTo(m mat.Matrix, b float64) mat.Matrix {
+	r, _ := m.Dims()
+	a := mat.NewDense(r+1, 1, nil)
+
+	a.Set(0, 0, b)
+	for i := 0; i < r; i++ {
+		a.Set(i+1, 0, m.At(i, 0))
+	}
+	return a
+}
+
+// pretty print a Gonum matrix
+func matrixPrint(X mat.Matrix) {
+	fa := mat.Formatted(X, mat.Prefix(""), mat.Squeeze())
+	fmt.Printf("%v\n", fa)
+}
+
 // Now that we have our neural network , the two main functions we can ask it to do is
 //Either train itself with a set of data or predict values given a set of test data
 
@@ -164,7 +180,7 @@ func (net *Network) Train(inputData []float64, targetData []float64) {
 	// feedfoward
 	inputs := mat.NewDense(len(inputData), 1, inputData)
 	hiddenInputs := dot(net.hiddenWeights, inputs)
-	hiddenOutputs := apply(sigmoid, hiddenOutputs)
+	hiddenOutputs := apply(sigmoid, hiddenInputs)
 	finalInputs := dot(net.outputWeights, hiddenOutputs)
 	finalOutputs := apply(sigmoid, finalInputs)
 
@@ -197,7 +213,7 @@ Remember that we are subtracting this number from the weights. Since this is a n
 
 To simplify the calculations we use a sigmoidPrime function, which is nothing more than doing sigP = sig(1 - sig)
 */
-func sigmoidPrime(m mat.Matrix) m.Matrix {
+func sigmoidPrime(m mat.Matrix) mat.Matrix {
 	rows, _ := m.Dims()
 	o := make([]float64, rows)
 	for i := range o {
@@ -255,7 +271,7 @@ func dataFromImage(filePath string) (pixels []float64) {
 	bounds := img.Bounds()
 	gray := image.NewGray(bounds)
 
-	for x := 0; x < bounds.Max; x++ {
+	for x := 0; x < bounds.Max.X; x++ {
 		for y := 0; y < bounds.Max.Y; y++ {
 
 			var rgba = img.At(x, y)
