@@ -144,7 +144,7 @@ func (net Network) Predict(inputData []float64) mat.Matrix {
 	inputs := mat.NewDense(len(inputData), 1, inputData)
 	hiddenInputs := dot(net.hiddenWeights, inputs)
 	hiddenOutputs := apply(sigmoid, hiddenInputs)
-	finalInputs := dot(net.OutputWeights, hiddenOutputs)
+	finalInputs := dot(net.outputWeights, hiddenOutputs)
 	finalOutputs := apply(sigmoid, finalInputs)
 	return finalOutputs
 	/*We start off with the inputs first, by creating a matrix called inputs to represent the input values
@@ -160,7 +160,7 @@ func sigmoid(r, c int, z float64) float64 {
 }
 
 // Let’s see how we do forward and back propagation in training.
-func (net *Neural) Train(inputData []float64, targetData []float64) {
+func (net *Network) Train(inputData []float64, targetData []float64) {
 	// feedfoward
 	inputs := mat.NewDense(len(inputData), 1, inputData)
 	hiddenInputs := dot(net.hiddenWeights, inputs)
@@ -178,7 +178,7 @@ func (net *Neural) Train(inputData []float64, targetData []float64) {
 		scale(net.learningRate,
 			dot(multiply(outputErrors, sigmoidPrime(finalOutputs)),
 				hiddenOutputs.T()))).(*mat.Dense)
-	net.hidddenWeights = add(net.hiddenWeights,
+	net.hiddenWeights = add(net.hiddenWeights,
 		scale(net.learningRate,
 			dot(multiply(hiddenErrors, sigmoidPrime(hiddenOutputs)),
 				inputs.T()))).(*mat.Dense)
