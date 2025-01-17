@@ -10,7 +10,10 @@ import (
 	"os"
 	"strconv"
 	"time"
-	//"encoding/base64"
+	//"bytes"
+	// "image"
+	// "image/png"
+	// "encoding/base64"
 )
 
 func main() {
