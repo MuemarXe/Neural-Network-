@@ -7,7 +7,7 @@ import (
 	"math"
 	"os"
 
-	"gomun.org/v1/gonum/mat"
+	"gonum.org/v1/gonum/mat"
 	"gonum.org/v1/gonum/stat/distuv"
 )
 
@@ -84,7 +84,7 @@ func multiply(m, n mat.Matrix) mat.Matrix {
 // The add and subtract functions allow to add or subtract a function to/from another
 func add(m, n mat.Matrix) mat.Matrix {
 	r, c := m.Dims()
-	o := mat.Dense(r, c, nil)
+	o := mat.NewDense(r, c, nil)
 	o.Add(m, n)
 	return o
 }
@@ -97,15 +97,15 @@ func subtract(m, n mat.Matrix) mat.Matrix {
 
 // The addScalar function allows us to add a scalar value to each element in the matrix
 
-func addScalar(i float64, m mat.Matrix) mat.Matrix {
-	r, c := m.Dims()
-	a := make([]float64, r*c)
-	for x := 0; x < r*c; x++ {
-		a[x] = i
-	}
-	n := mat.NewDense(r, c, a)
-	return add(m, n)
-}
+// func addScalar(i float64, m mat.Matrix) mat.Matrix {
+// 	r, c := m.Dims()
+// 	a := make([]float64, r*c)
+// 	for x := 0; x < r*c; x++ {
+// 		a[x] = i
+// 	}
+// 	n := mat.NewDense(r, c, a)
+// 	return add(m, n)
+// }
 
 //Neural network and Matrices
 // Initializing the weights with a random set of numbers is one of the more important parameters
@@ -126,22 +126,22 @@ func randomArray(size int, v float64) (data []float64) {
 
 }
 
-func addBiasNodeTo(m mat.Matrix, b float64) mat.Matrix {
-	r, _ := m.Dims()
-	a := mat.NewDense(r+1, 1, nil)
+// func addBiasNodeTo(m mat.Matrix, b float64) mat.Matrix {
+// 	r, _ := m.Dims()
+// 	a := mat.NewDense(r+1, 1, nil)
 
-	a.Set(0, 0, b)
-	for i := 0; i < r; i++ {
-		a.Set(i+1, 0, m.At(i, 0))
-	}
-	return a
-}
+// 	a.Set(0, 0, b)
+// 	for i := 0; i < r; i++ {
+// 		a.Set(i+1, 0, m.At(i, 0))
+// 	}
+// 	return a
+// }
 
-// pretty print a Gonum matrix
-func matrixPrint(X mat.Matrix) {
-	fa := mat.Formatted(X, mat.Prefix(""), mat.Squeeze())
-	fmt.Printf("%v\n", fa)
-}
+// // pretty print a Gonum matrix
+// func matrixPrint(X mat.Matrix) {
+// 	fa := mat.Formatted(X, mat.Prefix(""), mat.Squeeze())
+// 	fmt.Printf("%v\n", fa)
+// }
 
 // Now that we have our neural network , the two main functions we can ask it to do is
 //Either train itself with a set of data or predict values given a set of test data
