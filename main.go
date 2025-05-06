@@ -14,6 +14,7 @@ import (
 	// "image"
 	// "image/png"
 	// "encoding/base64"
+	
 )
 
 func main() {
@@ -34,7 +35,7 @@ func main() {
 		load(&net)
 		mnistPredict(&net)
 	default:
-		//do noting......
+		
 	}
 
 }
@@ -46,6 +47,8 @@ and each column except the first represents a pixel. The first column is the lab
 	which is the actual digit that the image is supposed to represent. In other words,
 	 this is the target output.
 	Since there are 28 x 28 pixels, this means there are 785 columns in every row.
+
+ editted 
 */
 func mnistTrain(net *Network) {
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -133,4 +136,6 @@ func mnistPredict(net *Network) {
 	elapsed := time.Since(t1)
 	fmt.Printf("Time taken to check: %s\n", elapsed)
 	fmt.Println("score:", score)
+
+	
 }
